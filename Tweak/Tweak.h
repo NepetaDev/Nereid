@@ -484,6 +484,8 @@
 @property (assign,getter=isTimeControlOnScreen,nonatomic) BOOL timeControlOnScreen; 
 @property (nonatomic,retain) MediaControlsTransportStackView * mediaControlsTransportStackView;              //@synthesize mediaControlsTransportStackView=_mediaControlsTransportStackView - In the implementation block
 @property (nonatomic,retain) MediaControlsTimeControl * mediaControlsTimeControl;                            //@synthesize mediaControlsTimeControl=_mediaControlsTimeControl - In the implementation block
+@property (nonatomic,retain) MediaControlsTimeControl * timeControl; 
+@property (nonatomic,retain) MediaControlsTransportStackView * transportStackView;
 -(id)initWithFrame:(CGRect)arg1 ;
 -(void)layoutSubviews;
 -(CGSize)sizeThatFits:(CGSize)arg1 ;
@@ -516,6 +518,7 @@
 @property (assign,nonatomic) long long style;                                                      //@synthesize style=_style - In the implementation block
 @property (assign,getter=isShowingRoutingPicker,nonatomic) BOOL showingRoutingPicker;              //@synthesize showingRoutingPicker=_showingRoutingPicker - In the implementation block
 @property (nonatomic,retain) MediaControlsContainerView * mediaControlsContainerView;              //@synthesize mediaControlsContainerView=_mediaControlsContainerView - In the implementation block
+@property (nonatomic,retain) MediaControlsContainerView * containerView;   
 @property (assign,getter=isEmpty,nonatomic) BOOL empty;                                            //@synthesize empty=_empty - In the implementation block
 @property (nonatomic,retain) UIView * routingView;                                                 //@synthesize routingView=_routingView - In the implementation block
 -(id)initWithFrame:(CGRect)arg1 ;
@@ -574,13 +577,20 @@
 
 @end
 
+@interface PLPlatterView : UIView
+
+@property (nonatomic,readonly) UIView * backgroundMaterialView; 
+@property (nonatomic,readonly) UIView * mainOverlayView; 
+
+@end
+
 @interface MediaControlsEndpointController : NSObject
 
 @property (nonatomic,readonly) MPCPlayerResponse * response; 
 
 @end
 
-@interface MediaControlsPanelViewController : UIViewController
+@interface UniversalNRDController : UIViewController
 
 @property (nonatomic,retain) MPCPlayerResponse * response; 
 @property (nonatomic,retain) MediaControlsEndpointController * endpointController;
@@ -588,6 +598,7 @@
 @property (assign,nonatomic) long long mediaControlsPlayerState;                                           //@synthesize mediaControlsPlayerState=_mediaControlsPlayerState - In the implementation block
 @property (assign,getter=isTransitioning,nonatomic) BOOL transitioning;                                    //@synthesize transitioning=_transitioning - In the implementation block
 @property (nonatomic,retain) MediaControlsHeaderView * headerView;                                         //@synthesize headerView=_headerView - In the implementation block
+@property (nonatomic,retain) MediaControlsHeaderView * nowPlayingHeaderView; 
 @property (nonatomic,retain) MediaControlsRoutingCornerView * routingCornerView;                           //@synthesize routingCornerView=_routingCornerView - In the implementation block
 @property (nonatomic,retain) MediaControlsParentContainerView * parentContainerView;                       //@synthesize parentContainerView=_parentContainerView - In the implementation block
 @property (nonatomic,retain) MediaControlsVolumeContainerView * volumeContainerView;                       //@synthesize volumeContainerView=_volumeContainerView - In the implementation block
@@ -674,6 +685,14 @@
 @property (nonatomic, assign) BOOL nrdEnabled;
 
 -(void)nrdUpdate;
+
+@end
+
+@interface MRPlatterViewController : UniversalNRDController
+
+@end
+
+@interface MediaControlsPanelViewController : UniversalNRDController
 
 @end
 

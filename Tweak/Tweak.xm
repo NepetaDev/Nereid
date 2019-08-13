@@ -32,7 +32,7 @@ NSInteger extraButtonRight = 0;
 UIImageView *artworkView = nil;
 CGFloat alpha = 1; //default 0.667
 
-MediaControlsPanelViewController *lastController = nil;
+UniversalNRDController *lastController = nil;
 SBFLockScreenDateView *lastDateView = nil;
 SBDashBoardNotificationAdjunctListViewController *adjunctListViewController = nil;
 
@@ -135,6 +135,11 @@ BOOL hasArtwork = NO;
     return %orig;
 }
 
+-(BOOL)isShowingMediaControls {
+    if (alwaysShowPlayer) return YES;
+    return %orig;
+}
+
 -(void)_didUpdateDisplay {
     %orig;
     if (hideClockWhilePlaying) lastDateView.hidden = [self isShowingMediaControls];
@@ -146,11 +151,22 @@ BOOL hasArtwork = NO;
 
 %hook SBDashBoardAdjunctItemView
 
+%new
+-(id)valueForUndefinedKey:(NSString *)key {
+    return nil;
+}
+
 -(void)layoutSubviews {
     %orig;
-    self.backgroundMaterialView.alpha = 0.0;
-    UIView *overlayView = MSHookIvar<UIView *>(self, "_mainOverlayView");
-    overlayView.alpha = 0.0;
+    if ([self valueForKey:@"_mainOverlayView"]) {
+        self.backgroundMaterialView.alpha = 0.0;
+        UIView *overlayView = [self valueForKey:@"_mainOverlayView"];
+        overlayView.alpha = 0.0;
+    } else if ([self valueForKey:@"_platterView"]) {
+        PLPlatterView *platterView = [self valueForKey:@"_platterView"];
+        platterView.backgroundMaterialView.alpha = 0.0;
+        platterView.mainOverlayView.alpha = 0.0;
+    }
 }
 
 %end
@@ -351,6 +367,74 @@ BOOL hasArtwork = NO;
     [self.parentContainerView.mediaControlsContainerView layoutIfNeeded];
     [self.parentContainerView.mediaControlsContainerView.mediaControlsTransportStackView setNeedsLayout];
     [self.parentContainerView.mediaControlsContainerView.mediaControlsTransportStackView layoutIfNeeded];
+}
+
+%end
+
+/* Thanks to iOS 12.2 we get this nasty shit reeee */
+
+%hook MRPlatterViewController
+
+%property (nonatomic, assign) BOOL nrdEnabled;
+
+-(void)setStyle:(NSInteger)style {
+    if (style == 3) { // 0 for reachit full
+        self.nrdEnabled = YES;
+        self.parentContainerView.containerView.timeControl.nrdEnabled = YES;
+        self.parentContainerView.containerView.transportStackView.nrdEnabled = YES;
+        self.nowPlayingHeaderView.nrdEnabled = YES;
+
+        lastController = self;
+    } else {
+        self.nrdEnabled = NO;
+        self.parentContainerView.containerView.timeControl.nrdEnabled = NO;
+        self.parentContainerView.containerView.transportStackView.nrdEnabled = NO;
+        self.nowPlayingHeaderView.nrdEnabled = NO;
+    }
+
+    %orig;
+}
+
+%new
+-(void)nrdUpdate {
+    if (!self.nrdEnabled) return;
+
+    [self.parentContainerView.containerView.timeControl nrdUpdate];
+    [self.parentContainerView.containerView.transportStackView nrdUpdate];
+    [self.nowPlayingHeaderView nrdUpdate];
+    [self.volumeContainerView nrdUpdate];
+
+    [self.parentContainerView setNeedsLayout];
+    [self.parentContainerView layoutIfNeeded];
+    [self.parentContainerView.containerView setNeedsLayout];
+    [self.parentContainerView.containerView layoutIfNeeded];
+    [self.parentContainerView.containerView.transportStackView setNeedsLayout];
+    [self.parentContainerView.containerView.transportStackView layoutIfNeeded];
+}
+
+-(void)viewWillLayoutSubviews {
+    %orig;
+    if (!self.nrdEnabled) return;
+    self.volumeContainerView.hidden = (hideVolumeSlider);
+}
+
+-(void)viewWillAppear:(BOOL)animated {
+    %orig;
+    if (!self.nrdEnabled) return;
+    if (lastDateView && [lastDateView respondsToSelector:@selector(nrdUpdate)]) [lastDateView nrdUpdate];
+    [self.parentContainerView setNeedsLayout];
+    [self.parentContainerView layoutIfNeeded];
+}
+
+-(void)viewDidAppear:(BOOL)animated {
+    %orig;
+    if (!self.nrdEnabled) return;
+    [self.parentContainerView setNeedsLayout];
+    [self.parentContainerView layoutIfNeeded];
+    [self.parentContainerView.containerView setNeedsLayout];
+    [self.parentContainerView.containerView layoutIfNeeded];
+    [self.parentContainerView.containerView.transportStackView setNeedsLayout];
+    [self.parentContainerView.containerView.transportStackView layoutIfNeeded];
 }
 
 %end
